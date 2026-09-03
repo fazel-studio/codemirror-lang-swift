@@ -1,6 +1,6 @@
 {
   "name": "@fazelstudio/codemirror-lang-swift",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Swift language support for the CodeMirror code editor",
   "license": "MIT",
   "author": "Zulfazli (Fazelllyyy)",
