@@ -1,0 +1,497 @@
+# Case 1: import Foundation and @testable import
+import Foundation
+@testable import MyModule
+import struct Foundation.Data
+
+# Case 2: class, struct, enum, protocol, extension, actor
+class EmptyClass {}
+struct EmptyStruct {}
+enum EmptyEnum {}
+protocol EmptyProtocol {}
+extension EmptyClass {}
+actor EmptyActor {}
+
+class FilledClass {
+    var x: Int = 0
+    func foo() {}
+}
+struct FilledStruct {
+    let y: String
+}
+enum FilledEnum {
+    case a
+    case b
+}
+protocol FilledProtocol {
+    associatedtype T
+    func bar() -> Int
+}
+extension FilledClass {
+    func extra() {}
+}
+actor FilledActor {
+    var state: Int = 0
+}
+
+# Case 3: Conformance list
+struct User: Identifiable, Codable {
+    let id: Int
+}
+
+# Case 4: Generic with inline constraint and where clause
+struct Box<T: Comparable> {
+    var value: T
+}
+func f<T>(x: T) where T: Equatable {
+    print(x)
+}
+func g<U: Hashable>(x: U) where U: Comparable {}
+
+# Case 5: associatedtype in protocol
+protocol Container {
+    associatedtype Item
+    associatedtype Element: Equatable
+    associatedtype Value = Int
+    func get() -> Item
+}
+
+# Case 6: typealias
+typealias StringMap = [String: Int]
+typealias Handler<T> = (T) -> Void
+typealias MyInt = Int
+
+# Case 7: Property variations
+struct Props {
+    var stored: Int = 42
+    let constant: String = "hi"
+    var computed: Int {
+        return stored * 2
+    }
+    var computedFull: Int {
+        get { return stored }
+        set { stored = newValue }
+    }
+    var observed: Int = 0 {
+        willSet { print(newValue) }
+        didSet { print(oldValue) }
+    }
+    var observed2: String {
+        willSet(newVal) {}
+        didSet(oldVal) {}
+    }
+    @State var wrapper: Int = 0
+    @Published var published: String = ""
+}
+
+# Case 8: Function with external label, _, inout, default value
+func f(for id: Int) {}
+func g(_ x: Int) {}
+func h(x: inout Int) {}
+func withDefault(name: String = "default") {}
+func mixed(_ a: Int, for b: String, x: inout Double = 0) {}
+func labels(first second: Int, _ third: String) {}
+
+# Case 9: Function with async throws and try await call
+func fetch(id: Int) async throws -> String {
+    return "hi"
+}
+func caller() async {
+    let x = try await fetch(id: 1)
+    let y = try? await fetch(id: 2)
+    let z = try! await fetch(id: 3)
+    await fetch(id: 4)
+}
+
+# Case 10: Initializer regular, failable, implicitly unwrapped
+struct InitTest {
+    init(value: Int) {}
+    init?(value: String) {}
+    init!(value: Double) {}
+    init() {}
+}
+
+# Case 11: subscript declaration
+struct SubTest {
+    subscript(index: Int) -> String {
+        get { return "" }
+        set {}
+    }
+    subscript(key: String) -> Int {
+        get { return 0 }
+        set {}
+    }
+}
+
+# Case 12: Enum with associated and raw values
+enum Result<T> {
+    case success(T)
+    case failure(Error)
+}
+enum Status: Int {
+    case pending = 0
+    case done = 1
+}
+enum Either {
+    case left(Int)
+    case right(String)
+    case both(Int, String)
+}
+func testEnum() {
+    let r = Result<Int>.success(5)
+    switch r {
+    case .success(let v):
+        print(v)
+    case .failure(let e):
+        print(e)
+    }
+    let s = Status.pending
+    switch s {
+    case .pending:
+        print("pending")
+    case .done:
+        print("done")
+    }
+}
+
+# Case 13: switch comprehensive
+func testSwitch(x: Int, y: (Int, String), z: String?) {
+    switch x {
+    case 1:
+        print("one")
+    case 2, 3:
+        print("two or three")
+    case 1...5:
+        print("range")
+    case 1..<10 where x > 5:
+        print("half open")
+    case let v where v > 10:
+        print(v)
+    case let v?:
+        print(v)
+    default:
+        print("default")
+    }
+
+    switch y {
+    case (let a, let b):
+        print(a, b)
+    case (1, "hi"):
+        print("tuple")
+    default:
+        break
+    }
+
+    switch z {
+    case let s?:
+        print(s)
+    case nil:
+        print("nil")
+    default:
+        break
+    }
+
+    switch x {
+    case 1:
+        fallthrough
+    case 2:
+        print("2 after fallthrough")
+    default:
+        break
+    }
+}
+
+# Case 14: if let / guard let optional binding
+func testOptionalBinding(a: Int?, b: String?, c: Int) {
+    if let x = a {
+        print(x)
+    }
+    if var y = b {
+        print(y)
+    }
+    guard let x = a else { return }
+    guard let y = b else { return }
+
+    if let x = a, x > 0, let y = b, y.count > 0 {
+        print(x, y)
+    }
+
+    if let x = a, let y = b, c > 10 {
+        print(x, y, c)
+    }
+
+    if case let x? = a {
+        print(x)
+    }
+}
+
+# Case 15: for item in collection where condition
+func testFor() {
+    let arr = [1,2,3]
+    for item in arr {
+        print(item)
+    }
+    for item in arr where item > 1 {
+        print(item)
+    }
+    for (k, v) in ["a": 1, "b": 2] {
+        print(k, v)
+    }
+}
+
+# Case 16: repeat while
+func testRepeat() {
+    var i = 0
+    repeat {
+        i += 1
+        print(i)
+    } while i < 10
+
+    repeat {
+        print("hi")
+    } while false
+}
+
+# Case 17: defer
+func testDefer() {
+    defer { print("defer") }
+    print("start")
+    defer {
+        print("another defer")
+    }
+}
+
+# Case 18: do catch
+func testDoCatch() {
+    do {
+        try something()
+    } catch {
+        print(error)
+    }
+
+    do {
+        try risky()
+    } catch let e as MyError {
+        print(e)
+    } catch MyError.invalid {
+        print("invalid")
+    } catch {
+        print("unknown")
+    }
+
+    do {
+        try foo()
+    } catch where true {
+        print("where")
+    }
+}
+
+# Case 19: trailing closure single and multiple
+let numbers = [1,2,3]
+let doubled = numbers.map { $0 * 2 }
+let filtered = numbers.filter { $0 > 1 }
+let result = foo(x: 1) { print("first") } onError: { print("error") }
+let withMultiple = bar { print("a") } second: { print("b") } third: { print("c") }
+
+func foo(x: Int, onSuccess: () -> Void) {}
+func bar(_ a: () -> Void) {}
+
+# Case 20: shorthand closure argument
+let arr = [1,2,3]
+let mapped = arr.map { $0 * 2 }
+let sorted = arr.sorted { $0 < $1 }
+let complex = arr.reduce(0) { $0 + $1 }
+let withIndex = arr.enumerated().map { $0.offset + $1 }
+
+# Case 21: string interpolation simple and complex
+let name = "World"
+let greeting = "Hello, \(name)!"
+let complex = "Result: \(1 + 2 * 3)"
+let chained = "\(a.b.c) and \(x.y)"
+let nested = "outer \( "inner \(x)" ) end"
+let withExpr = "\(numbers.map { $0 * 2 }.count)"
+
+# Case 22: multi-line string literal
+let multi = """
+This is a multi-line
+string literal
+with multiple lines
+"""
+let emptyMulti = """
+"""
+let withInterpolation = """
+Hello \(name)
+"""
+
+# Case 23: extended delimiter string
+let raw1 = #"raw string"#
+let raw2 = #"raw with \(name) not interpolated"#
+let rawInterp = #"interpolated \#(name) here"#
+let rawDouble = ##"raw ##" still raw"## 
+let rawInterp2 = ##"interpolated \##(value) here"##
+let rawHash = ###"### raw ###"###
+
+# Case 24: nested block comment
+/* outer comment */
+/* outer /* inner */ still outer */
+/* outer /* inner /* deep */ inner2 */ outer2 */
+/* comment with * and / inside */
+let x = 1 // line comment after code
+/* block comment */ let y = 2
+/** doc block comment */
+/** 
+ doc with multiple lines
+ - Parameter x: value
+ */
+
+# Case 25: optional chaining, force unwrap, nil-coalescing
+let a: String? = nil
+let b = a?.count
+let c = a?.b?.c
+let d = a!.count
+let e = a!.b
+let f = a ?? "default"
+let g = a?.b ?? c?.d
+let h = (a?.b)!.c ?? "x"
+
+# Case 26: range operator
+let r1 = 1...10
+let r2 = 1..<10
+let r3 = ...10
+let r4 = 0...
+for i in 1...5 { print(i) }
+for i in 0..<10 { print(i) }
+let range = 1...10
+switch x {
+case 1...5: break
+case 1..<5: break
+default: break
+}
+
+# Case 27: type casting
+let x: Any = 1
+let y = x as Int
+let z = x as? String
+let w = x as! Double
+let isInt = x is Int
+let isString = x is String
+let casted = value as? MyType ?? defaultValue
+
+# Case 28: generic vs comparison
+let arr1: Array<Int> = []
+let dict: Dictionary<String, Int> = [:]
+let set: Set<Int> = []
+let y = a < b
+let z = a > b
+let w = a < b && c > d
+let comp = x < y ? 1 : 0
+let gen = Box<Int>(value: 5)
+let nestedGen: Array<Dictionary<String, Int>> = []
+
+# Case 29: trailing closure not ambiguous with if block
+let x = [1,2,3]
+if x.isEmpty {
+    print("empty")
+}
+if x.isEmpty { print("empty2") }
+while x.isEmpty {
+    print("while")
+}
+guard x.isEmpty else { return }
+for item in x { print(item) }
+
+# Case 30: labeled statement
+func testLabels() {
+    outer: for i in 0..<10 {
+        inner: for j in 0..<10 {
+            if i * j > 50 {
+                break outer
+            }
+            continue inner
+        }
+    }
+
+    myLoop: while true {
+        break myLoop
+    }
+
+    outer2: for x in [1,2,3] {
+        if x == 2 { continue outer2 }
+    }
+}
+
+# Case 31: custom operator declaration and overloading
+infix operator +-: AdditionPrecedence
+infix operator ***: MultiplicationPrecedence
+prefix operator +++
+postfix operator ~~
+precedencegroup MyPrecedence {
+    higherThan: AdditionPrecedence
+    lowerThan: MultiplicationPrecedence
+    associativity: left
+    assignment: false
+}
+struct Vector {
+    var x: Double
+    var y: Double
+    static func +(lhs: Vector, rhs: Vector) -> Vector {
+        return Vector(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
+    }
+    static func +- (lhs: Vector, rhs: Vector) -> Vector {
+        return lhs + rhs
+    }
+}
+
+# Case 32: attribute complex
+@available(iOS 15.0, *)
+struct AvailableTest {
+    @available(iOS 14.0, macOS 11.0, *)
+    func foo() {}
+
+    @discardableResult
+    func bar() -> Int { return 0 }
+
+    @objc func objcMethod() {}
+
+    @escaping var closure: () -> Void
+
+    @State var state: Int = 0
+    @Published var published: String = ""
+    @MainActor func mainActorFunc() {}
+    @ViewBuilder var body: String { "" }
+}
+
+# Case 33: doc comment
+/// This is a doc comment
+/// - Parameter x: the input value
+/// - Returns: the result
+/// - Throws: an error if fails
+func documented(x: Int) throws -> Int {
+    return x
+}
+
+/**
+ This is a block doc comment
+ - Parameter y: another value
+ - Returns: something
+ */
+func blockDoc(y: String) -> String {
+    return y
+}
+
+/// Single line doc
+let a = 1
+
+/** Single block doc */
+let b = 2
+
+# Case 34: empty file and only comments
+// This file is empty except for comments
+
+/* block comment only */
+
+/* nested /* comment */ */
+
+/// doc comment only
+
+// empty with just comment and whitespace
+

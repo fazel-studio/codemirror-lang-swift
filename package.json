@@ -1,0 +1,65 @@
+{
+  "name": "@fazelstudio/codemirror-lang-swift",
+  "version": "0.2.0",
+  "description": "Swift language support for the CodeMirror code editor",
+  "license": "MIT",
+  "author": "Zulfazli (Fazelllyyy)",
+  "homepage": "https://github.com/fazel-studio/codemirror-lang-swift#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fazel-studio/codemirror-lang-swift.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fazel-studio/codemirror-lang-swift/issues"
+  },
+  "keywords": [
+    "codemirror",
+    "codemirror6",
+    "editor",
+    "swift",
+    "lezer",
+    "language",
+    "syntax-highlighting"
+  ],
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "rollup -c",
+    "build:grammar": "lezer-generator src/swift.grammar -o src/parser.js",
+    "watch": "rollup -c -w",
+    "test": "mocha test/test-swift.js",
+    "pretest": "npm run build:grammar"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.0.0",
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0",
+    "@lezer/common": "^1.2.0",
+    "@lezer/highlight": "^1.2.0",
+    "@lezer/lr": "^1.4.0"
+  },
+  "devDependencies": {
+    "@lezer/generator": "^1.7.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "mocha": "^10.0.0",
+    "rollup": "^4.0.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.4.0"
+  }
+}

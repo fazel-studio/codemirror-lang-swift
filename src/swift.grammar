@@ -1,0 +1,653 @@
+@top SwiftFile { ImportStatement* Statement* }
+
+@skip { space | LineComment | BlockComment | DocBlockComment | DocLineComment }
+
+@external tokens blockComment from "./tokens.js" { BlockComment, DocBlockComment }
+
+@precedence {
+  typeArgs
+  member @left
+  call @left
+  optionalChain @left
+  forceUnwrap @left
+  prefixOp
+  range @left
+  cast @left
+  times @left
+  plus @left
+  compare @left
+  and @left
+  or @left
+  nilCoalesce @right
+  ternary @right
+  assign @right
+  arrow @right
+  closure
+  else
+  statement
+  label
+}
+
+// Import with optional kind and attributes
+ImportStatement {
+  (Attribute | Modifier)* kw<"import"> ImportKind? QualifiedIdentifier
+}
+
+ImportKind {
+  kw<"typealias"> | kw<"struct"> | kw<"class"> | kw<"enum"> | kw<"protocol"> | kw<"let"> | kw<"var"> | kw<"func">
+}
+
+QualifiedIdentifier { Identifier ("." Identifier)* }
+
+TypeIdentifier { Identifier }
+
+// Declarations as Statements
+ClassDeclaration {
+  DeclarationModifiers kw<"class"> TypeIdentifier GenericParameters? InheritanceClause? WhereClause? MemberBody
+}
+
+StructDeclaration {
+  DeclarationModifiers kw<"struct"> TypeIdentifier GenericParameters? InheritanceClause? WhereClause? MemberBody
+}
+
+EnumDeclaration {
+  DeclarationModifiers kw<"enum"> TypeIdentifier GenericParameters? InheritanceClause? WhereClause? MemberBody
+}
+
+ProtocolDeclaration {
+  DeclarationModifiers kw<"protocol"> TypeIdentifier GenericParameters? InheritanceClause? WhereClause? MemberBody
+}
+
+ExtensionDeclaration {
+  DeclarationModifiers kw<"extension"> TypeIdentifier GenericArguments? InheritanceClause? WhereClause? MemberBody
+}
+
+ActorDeclaration {
+  DeclarationModifiers kw<"actor"> TypeIdentifier GenericParameters? InheritanceClause? WhereClause? MemberBody
+}
+
+DeclarationModifiers { (Attribute | Modifier)* }
+
+MemberBody { "{" Member* "}" }
+
+Member {
+  ClassDeclaration |
+  StructDeclaration |
+  EnumDeclaration |
+  ProtocolDeclaration |
+  ExtensionDeclaration |
+  ActorDeclaration |
+  FunctionDeclaration |
+  FunctionDeclarationNoBody |
+  VariableDeclaration |
+  TypeAliasDeclaration |
+  AssociatedTypeDeclaration |
+  InitializerDeclaration |
+  SubscriptDeclaration |
+  OperatorDeclaration |
+  PrecedenceGroupDeclaration |
+  EnumCaseDeclaration
+}
+
+EnumCaseDeclaration {
+  DeclarationModifiers kw<"case"> EnumCase ("," EnumCase)*
+}
+
+EnumCase { Identifier TupleType? ("=" Expression)? }
+
+InheritanceClause { ":" Type ("," Type)* }
+
+GenericParameters { "<" GenericParameter ("," GenericParameter)* ">" !typeArgs }
+
+GenericParameter { TypeIdentifier (":" Type)? ("=" Type)? }
+
+WhereClause { kw<"where"> WhereRequirement ("," WhereRequirement)* }
+
+WhereRequirement { Type (":" | "==") Type }
+
+TypeAliasDeclaration {
+  DeclarationModifiers kw<"typealias"> TypeIdentifier GenericParameters? "=" Type
+}
+
+AssociatedTypeDeclaration {
+  DeclarationModifiers kw<"associatedtype"> TypeIdentifier InheritanceClause? ("=" !assign Type)?
+}
+
+VariableDeclaration {
+  DeclarationModifiers (kw<"var"> | kw<"let">) PatternInitializerList
+}
+
+PatternInitializerList { PatternInitializer ("," PatternInitializer)* }
+
+PatternInitializer {
+  Pattern !cast TypeAnnotation !call CodeBlock |
+  Pattern TypeAnnotation "=" Expression |
+  Pattern TypeAnnotation |
+  Pattern "=" Expression |
+  Pattern
+}
+
+TypeAnnotation { ":" !cast Type }
+
+FunctionName { Identifier | kw<"get"> | kw<"set"> | kw<"willSet"> | kw<"didSet"> }
+
+EffectSpecifiers { kw<"async">? (kw<"throws"> | kw<"rethrows">)? }
+
+FunctionSignature {
+  FunctionName GenericParameters? ParameterList EffectSpecifiers FunctionResult? WhereClause?
+}
+
+FunctionDeclaration[@dynamicPrecedence=1] {
+  DeclarationModifiers kw<"func"> FunctionSignature !call CodeBlock
+}
+
+FunctionDeclarationNoBody {
+  DeclarationModifiers kw<"func"> FunctionSignature
+}
+
+ParameterList { "(" Parameter ("," Parameter)* ","? ")" | "(" ")" }
+
+Parameter {
+  Attribute* ParameterLabel? Identifier ":" ParameterType ("=" Expression)?
+}
+
+ParameterType { kw<"inout">? Type }
+
+ParameterLabel { Identifier | kw<"_"> | kw<"for"> }
+
+FunctionResult { "->" Type }
+
+InitializerDeclaration {
+  DeclarationModifiers kw<"init"> ("?" | "!")? GenericParameters? ParameterList WhereClause? CodeBlock
+}
+
+SubscriptDeclaration {
+  DeclarationModifiers kw<"subscript"> GenericParameters? ParameterList "->" Type WhereClause? CodeBlock
+}
+
+OperatorDeclaration {
+  kw<"infix"> kw<"operator"> Operator PrecedenceGroupSpec? |
+  kw<"prefix"> kw<"operator"> Operator |
+  kw<"postfix"> kw<"operator"> Operator
+}
+
+PrecedenceGroupDeclaration {
+  kw<"precedencegroup"> Identifier "{" PrecedenceGroupAttribute* "}"
+}
+
+PrecedenceGroupAttribute {
+  kw<"higherThan"> ":" Identifier |
+  kw<"lowerThan"> ":" Identifier |
+  kw<"associativity"> ":" Identifier |
+  kw<"assignment"> ":" kw<"true"> |
+  kw<"assignment"> ":" kw<"false">
+}
+
+PrecedenceGroupSpec { ":" Identifier }
+
+CodeBlock[@dynamicPrecedence=1] { "{" Statement* "}" ~call }
+
+// Statements
+
+Statement {
+  ClassDeclaration |
+  StructDeclaration |
+  EnumDeclaration |
+  ProtocolDeclaration |
+  ExtensionDeclaration |
+  ActorDeclaration |
+  FunctionDeclaration |
+  VariableDeclaration |
+  TypeAliasDeclaration |
+  AssociatedTypeDeclaration |
+  InitializerDeclaration |
+  SubscriptDeclaration |
+  OperatorDeclaration |
+  PrecedenceGroupDeclaration |
+  IfStatement |
+  GuardStatement |
+  SwitchStatement |
+  ForStatement |
+  WhileStatement |
+  RepeatWhileStatement |
+  DeferStatement |
+  DoCatchStatement |
+  ReturnStatement |
+  BreakStatement |
+  ContinueStatement |
+  FallthroughStatement |
+  ThrowStatement |
+  LabeledStatement |
+  AccessorStatement |
+  ExpressionStatement
+}
+
+ExpressionStatement { Expression !statement ";"? }
+
+LabeledStatement { Identifier ":" Statement }
+
+IfStatement {
+  kw<"if"> ConditionList !typeArgs CodeBlock (kw<"else"> (IfStatement | CodeBlock))?
+}
+
+GuardStatement {
+  kw<"guard"> ConditionList kw<"else"> !typeArgs CodeBlock
+}
+
+ConditionList { Condition ("," Condition)* }
+
+Condition {
+  BindingCondition |
+  ConditionExpression
+}
+
+BindingCondition {
+  (kw<"let"> | kw<"var">) Pattern ("=" ConditionExpression)? |
+  kw<"case"> Pattern ("=" ConditionExpression)?
+}
+
+SwitchStatement {
+  kw<"switch"> ConditionExpression "{" SwitchCase* "}"
+}
+
+SwitchCase {
+  kw<"case"> CasePatternList ":" Statement* |
+  kw<"default"> ":" Statement*
+}
+
+CasePatternList { CasePattern ("," CasePattern)* (kw<"where"> Expression)? }
+
+CasePattern {
+  "." Identifier TuplePattern? |
+  "." Identifier GenericArguments? |
+  TuplePattern |
+  "(" Expression "," Expression ("," Expression)* ","? ")" |
+  Expression |
+  kw<"let"> Pattern |
+  kw<"var"> Pattern
+}
+
+Pattern {
+  Identifier !forceUnwrap ("?" | "!")? |
+  kw<"_"> !forceUnwrap ("?" | "!")? |
+  kw<"let"> Pattern |
+  kw<"var"> Pattern |
+  TuplePattern
+}
+
+TuplePattern { "(" Pattern ("," Pattern)* ","? ")" }
+
+ForStatement {
+  kw<"for"> Pattern kw<"in"> ConditionExpression (kw<"where"> ConditionExpression)? !typeArgs CodeBlock
+}
+
+WhileStatement {
+  kw<"while"> ConditionList !typeArgs CodeBlock
+}
+
+RepeatWhileStatement {
+  kw<"repeat"> CodeBlock kw<"while"> Expression
+}
+
+DeferStatement {
+  kw<"defer"> CodeBlock
+}
+
+DoCatchStatement {
+  kw<"do"> CodeBlock CatchClause*
+}
+
+CatchClause {
+  kw<"catch"> Pattern? (kw<"where"> ConditionExpression)? CodeBlock
+}
+
+AccessorStatement {
+  (kw<"get"> | kw<"set">) CodeBlock |
+  (kw<"willSet"> | kw<"didSet">) ("(" Identifier ")")? CodeBlock
+}
+
+ReturnStatement {
+  kw<"return"> !label Expression ";"? |
+  kw<"return"> ";"?
+}
+
+BreakStatement {
+  kw<"break"> !label Identifier ";"? |
+  kw<"break"> ";"?
+}
+
+ContinueStatement {
+  kw<"continue"> !label Identifier ";"? |
+  kw<"continue"> ";"?
+}
+
+FallthroughStatement {
+  kw<"fallthrough"> ";"?
+}
+
+ThrowStatement {
+  kw<"throw"> Expression ";"?
+}
+
+// Types
+
+Type {
+  OpaqueType |
+  FunctionType |
+  OptionalType |
+  ArrayType |
+  DictionaryType |
+  TupleType |
+  GenericType |
+  SimpleType
+}
+
+OpaqueType { (kw<"some"> | kw<"any">) Type }
+
+SimpleType { TypeIdentifier ~typeArgs | kw<"Self"> | kw<"self"> }
+
+GenericType[@dynamicPrecedence=1] { TypeIdentifier ~typeArgs GenericArguments }
+
+GenericArguments { "<" Type ("," Type)* ">" }
+
+OptionalType { Type !forceUnwrap ("?" | "!") }
+
+ArrayType { "[" Type "]" }
+
+DictionaryType { "[" Type ":" Type "]" }
+
+TupleType { "(" TupleElement ("," TupleElement)* ","? ")" | "(" ")" }
+
+TupleElement { (Identifier ":")? Type }
+
+FunctionType {
+  Type !arrow "->" Type
+}
+
+// Expressions
+
+Expression {
+  AssignmentExpression |
+  TernaryExpression |
+  NilCoalescingExpression |
+  LogicalOrExpression |
+  LogicalAndExpression |
+  ComparisonExpression |
+  RangeExpression |
+  CastExpression |
+  AdditiveExpression |
+  MultiplicativeExpression |
+  TryExpression |
+  PrefixExpression |
+  PostfixExpression |
+  PrimaryExpression
+}
+
+AssignmentExpression {
+  Expression !assign ("=" | "+=" | "-=" | "*=" | "/=" | "%=") Expression
+}
+
+TernaryExpression {
+  Expression !ternary "?" Expression ":" Expression
+}
+
+NilCoalescingExpression {
+  Expression !nilCoalesce "??" Expression
+}
+
+LogicalOrExpression {
+  Expression !or "||" Expression
+}
+
+LogicalAndExpression {
+  Expression !and "&&" Expression
+}
+
+ComparisonExpression {
+  Expression ~compare CompareOperator Expression
+}
+
+CompareOperator { "==" | "!=" | "<" | ">" | "<=" | ">=" | "===" | "!==" }
+
+RangeExpression {
+  Expression ("..." | "..<") Expression |
+  !range "..." Expression |
+  Expression !range "..." |
+  !range "..<" Expression |
+  Expression !range "..<"
+}
+
+CastExpression {
+  Expression !cast kw<"as"> ("?" | "!")? Type |
+  Expression !cast kw<"is"> Type
+}
+
+AdditiveExpression {
+  Expression !plus ("+" | "-") Expression
+}
+
+MultiplicativeExpression {
+  Expression !times ("*" | "/" | "%") Expression
+}
+
+PrefixExpression {
+  ("!" | "-" | "+" | "~" | "&") !prefixOp Expression
+}
+
+TryExpression {
+  kw<"try"> ("?" | "!")? Expression |
+  kw<"await"> Expression
+}
+
+PostfixExpression {
+  Expression !member "." Identifier GenericArguments? |
+  Expression !member "." kw<"self"> |
+  Expression !optionalChain "?." Identifier |
+  Expression !forceUnwrap "!" |
+  Expression !forceUnwrap "?" |
+  Expression !call "[" Expression "]" |
+  Expression !call "(" ArgumentList? ")" TrailingClosure? |
+  Expression !call TrailingClosure
+}
+
+// Restricted mirror of Expression used only in positions directly followed by a
+// control-flow CodeBlock ("{"): if/while/guard conditions, for-in/where subjects,
+// switch subject, catch where-clause. Swift forbids attaching a trailing closure
+// in these positions (it would be ambiguous with the block that follows), so this
+// grammar simply omits the trailing-closure postfix alternatives. Parenthesized
+// sub-expressions and call-argument contents freely fall back to the full,
+// unrestricted `Expression` since parens/brackets close the ambiguity.
+ConditionExpression {
+  CondAssignmentExpression |
+  CondTernaryExpression |
+  CondNilCoalescingExpression |
+  CondLogicalOrExpression |
+  CondLogicalAndExpression |
+  CondComparisonExpression |
+  CondRangeExpression |
+  CondCastExpression |
+  CondAdditiveExpression |
+  CondMultiplicativeExpression |
+  CondTryExpression |
+  CondPrefixExpression |
+  CondPostfixExpression |
+  PrimaryExpression
+}
+
+CondAssignmentExpression {
+  ConditionExpression !assign ("=" | "+=" | "-=" | "*=" | "/=" | "%=") ConditionExpression
+}
+
+CondTernaryExpression {
+  ConditionExpression !ternary "?" ConditionExpression ":" ConditionExpression
+}
+
+CondNilCoalescingExpression {
+  ConditionExpression !nilCoalesce "??" ConditionExpression
+}
+
+CondLogicalOrExpression {
+  ConditionExpression !or "||" ConditionExpression
+}
+
+CondLogicalAndExpression {
+  ConditionExpression !and "&&" ConditionExpression
+}
+
+CondComparisonExpression {
+  ConditionExpression ~compare CompareOperator ConditionExpression
+}
+
+CondRangeExpression {
+  ConditionExpression ("..." | "..<") ConditionExpression |
+  !range "..." ConditionExpression |
+  ConditionExpression !range "..." |
+  !range "..<" ConditionExpression |
+  ConditionExpression !range "..<"
+}
+
+CondCastExpression {
+  ConditionExpression !cast kw<"as"> ("?" | "!")? Type |
+  ConditionExpression !cast kw<"is"> Type
+}
+
+CondAdditiveExpression {
+  ConditionExpression !plus ("+" | "-") ConditionExpression
+}
+
+CondMultiplicativeExpression {
+  ConditionExpression !times ("*" | "/" | "%") ConditionExpression
+}
+
+CondTryExpression {
+  kw<"try"> ("?" | "!")? ConditionExpression |
+  kw<"await"> ConditionExpression
+}
+
+CondPrefixExpression {
+  ("!" | "-" | "+" | "~" | "&") !prefixOp ConditionExpression
+}
+
+// Note: no bare-TrailingClosure alternative, and the call alternative does not
+// allow an optional TrailingClosure after the closing ")" — that is exactly the
+// production Swift disallows directly in a condition/subject position. Contents
+// inside "(...)" and "[...]" still use the full Expression grammar since those
+// delimiters remove the ambiguity.
+CondPostfixExpression {
+  ConditionExpression !member "." Identifier GenericArguments? |
+  ConditionExpression !member "." kw<"self"> |
+  ConditionExpression !optionalChain "?." Identifier |
+  ConditionExpression !forceUnwrap "!" |
+  ConditionExpression !forceUnwrap "?" |
+  ConditionExpression !call "[" Expression "]" |
+  ConditionExpression !call "(" ArgumentList? ")"
+}
+
+PrimaryExpression {
+  Identifier ~typeArgs |
+  GenericType |
+  Literal |
+  ClosureExpression |
+  ParenthesizedExpression |
+  ArrayLiteral |
+  DictionaryLiteral |
+  SelfExpression |
+  ShorthandArgument |
+  String |
+  MultiLineStringToken |
+  RawStringToken
+}
+
+Literal {
+  Number |
+  BooleanLiteral |
+  NilLiteral
+}
+
+BooleanLiteral { kw<"true"> | kw<"false"> }
+
+NilLiteral { kw<"nil"> }
+
+SelfExpression { kw<"self"> | kw<"Self"> | kw<"super"> }
+
+ParenthesizedExpression { "(" Expression? ")" }
+
+ArrayLiteral { "[" Expression? ("," Expression)* ","? "]" }
+
+DictionaryLiteral { "[" DictionaryEntry ("," DictionaryEntry)* ","? "]" | "[" ":" "]" }
+
+DictionaryEntry { Expression ":" Expression }
+
+ClosureExpression {
+  "{" ClosureSignature? Statement+ "}" ~call
+}
+
+ClosureSignature {
+  ParameterList? kw<"in"> |
+  Identifier kw<"in">
+}
+
+ArgumentList { Argument ("," Argument)* ","? }
+
+Argument { (Identifier ":")? Expression }
+
+TrailingClosure { ClosureExpression !call MultipleTrailingClosure* }
+
+MultipleTrailingClosure { Identifier ":" !call ClosureExpression }
+
+Operator { OperatorToken }
+
+Attribute { "@" Identifier ("(" AttributeArguments? ")")? }
+
+AttributeArguments { AttributeArgument ("," AttributeArgument)* ","? }
+
+AttributeArgument {
+  Identifier ":" Expression |
+  Identifier ":" |
+  Identifier Number |
+  "*" |
+  Expression
+}
+
+Modifier {
+  kw<"open"> | kw<"public"> | kw<"internal"> | kw<"fileprivate"> | kw<"private"> |
+  kw<"static"> | kw<"final"> | kw<"override"> | kw<"required"> | kw<"convenience"> |
+  kw<"mutating"> | kw<"nonmutating"> | kw<"lazy"> | kw<"weak"> | kw<"unowned"> |
+  kw<"indirect"> | kw<"dynamic"> | kw<"nonisolated"> | kw<"isolated">
+}
+
+kw<term> { @specialize[@name={term}]<Identifier, term> }
+
+@tokens {
+  space { @whitespace+ }
+
+  LineComment { "//" ![\n]* }
+  DocLineComment { "///" ![\n]* }
+
+  @precedence { DocLineComment, LineComment, "/", OperatorToken }
+
+  String { '"' (!["\\\n] | "\\" _)* '"' }
+
+  MultiLineStringToken { '"""' (!["] | '"' !["] | '""' !["])* '"""' }
+
+  RawStringToken { "#"+ '"' (!["] | '"' !["#])* '"' "#"+ }
+
+  Number {
+    @digit+ ("_" @digit+)* ("." @digit+ ("_" @digit+)*)? ( $[eE] $[+\-]? @digit+ ("_" @digit+)* )? |
+    "0x" $[0-9a-fA-F_]+ ("." $[0-9a-fA-F_]+)? ($[pP] $[+\-]? @digit+ ("_" @digit+)*)? |
+    "0o" $[0-7_]+ |
+    "0b" $[01_]+
+  }
+
+  Identifier { $[a-zA-Z_] $[a-zA-Z0-9_]* }
+
+  OperatorToken { $[+\-*/%<>=!&|^~.]+ }
+
+  ShorthandArgument { "$" @digit+ }
+
+  "in" "where" "as" "is"
+
+  "(" ")" "[" "]" "{" "}" "<" ">" ":" "," ";" "." "?" "!" "=" "+" "-" "*" "/" "%" "&" "|" "^" "~" "??" "?." "->" "..." "..<" "==" "!=" "<=" ">=" "&&" "||" "=>"
+}
+
+@detectDelim
